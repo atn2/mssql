@@ -37,7 +37,7 @@
 #   |                    \____\___/|_| |_|_| |_|\__, |                     |
 #   |                                           |___/                      |
 #   +----------------------------------------------------------------------+
-#   | The user can override and set variables in mk_oracle_cfg.ps1         |
+#   | The user can override and set variables in mk_mssql_cfg.ps1         |
 #   '----------------------------------------------------------------------'
 
 # Example configuration for MSSQL plugin for Windows
@@ -79,20 +79,20 @@ $CACHE_MAXAGE=600
 #   $ONLY_IIDS=@("XE", "ORCL", "FOO", "BAR")
 #
 # It is possible to filter IIDS negatively. Just add the following to
-# the mk_oracle_cfg.ps1 file:
+# the mk_mssql_cfg.ps1 file:
 #
 #   $EXCLUDE_<iid>="ALL"
 #
 # Another option is to filter single checks for IIDs. Just add
-# lines as follows to the mk_oracle_cfg.ps1 file. One section per
+# lines as follows to the mk_mssql_cfg.ps1 file. One section per
 # line:
 #
 #   $EXCLUDE_<iid>="<section>"
 #
-# For example skip oracle_sessions and oracle_logswitches checks
+# For example skip mssql_transactionlogs and mssql_blocked_sessions checks
 # for the instance "myiid".
 #
-#   $EXCLUDE_myiid="sessions logswitches"
+#   $EXCLUDE_myiid="transactionlogs blocked_sessions"
 #
 
 Function debug_echo {
@@ -219,10 +219,7 @@ Param(
 #    we do not want to wait for the output of the SQL, but simply use the last output if it is fresh enough.
 # 4. the MSSQL iid (instance-id)
 
-
-
      # Here we set our connection string to the database instance.
-     # This code could be expanded in future to support the oracle wallet.
 
      # we no longer assume we can login using "/ as sysdba", as we want to check if the listener is running
      $SQL_CONNECT="user_connection_not_set"
@@ -298,8 +295,9 @@ Param(
                     $assysdbaconnect=""
                }
                $UPPER_IID=$sqliid.toupper()
-
-               # use oracle wallet if requested in cfg file
+				
+				# atn update
+               # use oracle wallet if requested in cfg file - atn a modifier
                if ($the_user -like "/" ) {
                     $SQL_CONNECT="/@$UPPER_IID$assysdbaconnect"
                }
@@ -420,7 +418,7 @@ Param(
                     # write the output to the file
                     $res | Set-Content $fullpath
                     # show the contents of the file
-                    echo '<<<oracle_instance:sep(124)>>>'
+                    echo '<<<mssql_instance:sep(124)>>>'
                     cat $fullpath
                }
           }
@@ -434,7 +432,7 @@ Param(
                          # write the output to the file
                          $res | Set-Content $fullpath
                          # show the contents of the file
-                         echo '<<<oracle_instance:sep(124)>>>'
+                         echo '<<<mssql_instance:sep(124)>>>'
                          cat $fullpath
                     }
 
@@ -472,7 +470,7 @@ Function sql_performance {
      if ($DBVERSION -gt 101000)
      {
           $query_performance = @'
-          prompt <<<oracle_performance:sep(124)>>>;
+          prompt <<<mssql_performance:sep(124)>>>;
           select upper(i.INSTANCE_NAME)
                      ||'|'|| 'sys_time_model'
                      ||'|'|| S.STAT_NAME
@@ -519,7 +517,7 @@ Function sql_tablespaces {
      if ($DBVERSION -gt 102000)
      {
           $query_tablespace = @'
-          prompt <<<oracle_tablespaces:sep(124)>>>;
+          prompt <<<mssql_tablespaces:sep(124)>>>;
           select upper(d.NAME) || '|' || file_name ||'|'|| tablespace_name ||'|'|| fstatus ||'|'|| AUTOEXTENSIBLE
                   ||'|'|| blocks ||'|'|| maxblocks ||'|'|| USER_BLOCKS ||'|'|| INCREMENT_BY
                   ||'|'|| ONLINE_STATUS ||'|'|| BLOCK_SIZE
@@ -557,7 +555,7 @@ Function sql_tablespaces {
      elseif ($DBVERSION -gt 92000)
      {
           $query_tablespace = @'
-          prompt <<<oracle_tablespaces:sep(124)>>>;
+          prompt <<<mssql_tablespaces:sep(124)>>>;
           select upper(d.NAME) || '|' || file_name ||'|'|| tablespace_name ||'|'|| fstatus ||'|'|| AUTOEXTENSIBLE
                   ||'|'|| blocks ||'|'|| maxblocks ||'|'|| USER_BLOCKS ||'|'|| INCREMENT_BY
                   ||'|'|| ONLINE_STATUS ||'|'|| BLOCK_SIZE
@@ -602,7 +600,7 @@ Function sql_dataguard_stats {
      if ($DBVERSION -gt 92000)
      {
           $query_dataguard_stats = @'
-          prompt <<<oracle_dataguard_stats:sep(124)>>>;
+          prompt <<<mssql_dataguard_stats:sep(124)>>>;
           SELECT upper(d.NAME)
                      ||'|'|| upper(d.DB_UNIQUE_NAME)
                      ||'|'|| d.DATABASE_ROLE
@@ -630,7 +628,7 @@ Function sql_recovery_status {
      if ($DBVERSION -gt 101000)
      {
           $query_recovery_status = @'
-          prompt <<<oracle_recovery_status:sep(124)>>>;
+          prompt <<<mssql_recovery_status:sep(124)>>>;
           SELECT upper(d.NAME)
                      ||'|'|| d.DB_UNIQUE_NAME
                      ||'|'|| d.DATABASE_ROLE
@@ -653,7 +651,7 @@ Function sql_recovery_status {
      elseif ($DBVERSION -gt 92000)
      {
           $query_recovery_status = @'
-          prompt <<<oracle_recovery_status:sep(124)>>>
+          prompt <<<mssql_recovery_status:sep(124)>>>
           SELECT upper(d.NAME)
                      ||'|'|| d.NAME
                      ||'|'|| d.DATABASE_ROLE
@@ -683,7 +681,7 @@ Function sql_rman {
      if ($DBVERSION -gt 92000)
      {
           $query_rman = @'
-          prompt <<<oracle_rman:sep(124)>>>;
+          prompt <<<mssql_rman:sep(124)>>>;
           SELECT upper(d.NAME)
                  ||'|'|| a.STATUS
                  ||'|'|| to_char(a.START_TIME, 'YYYY-mm-dd_HH24:MI:SS')
@@ -734,7 +732,7 @@ Function sql_recovery_area {
      if ($DBVERSION -gt 102000)
      {
           $query_recovery_area = @'
-          prompt <<<oracle_recovery_area:sep(124)>>>;
+          prompt <<<mssql_recovery_area:sep(124)>>>;
           select upper(d.NAME)
                      ||'|'|| round((SPACE_USED-SPACE_RECLAIMABLE)/
                                (CASE NVL(SPACE_LIMIT,1) WHEN 0 THEN 1 ELSE SPACE_LIMIT END)*100)
@@ -760,7 +758,7 @@ Function sql_undostat {
      if ($DBVERSION -gt 102000)
      {
           $query_undostat = @'
-          prompt <<<oracle_undostat:sep(124)>>>;
+          prompt <<<mssql_undostat:sep(124)>>>;
           select upper(i.INSTANCE_NAME)
                      ||'|'|| ACTIVEBLKS
                      ||'|'|| MAXCONCURRENCY
@@ -784,7 +782,7 @@ Function sql_undostat {
           # TUNED_UNDORETENTION and ACTIVEBLKS are not available in Oracle <=9.2!
           # we set a -1 for filtering in check_undostat
           $query_undostat = @'
-          prompt <<<oracle_undostat:sep(124)>>>;
+          prompt <<<mssql_undostat:sep(124)>>>;
           select upper(i.INSTANCE_NAME)
                      ||'|-1'
                      ||'|'|| MAXCONCURRENCY
@@ -812,7 +810,7 @@ Function sql_undostat {
 ################################################################################
 Function sql_resumable {
           $query_resumable = @'
-          prompt <<<oracle_resumable:sep(124)>>>;
+          prompt <<<mssql_resumable:sep(124)>>>;
           select upper(i.INSTANCE_NAME)
                  ||'|'|| u.username
                  ||'|'|| a.SESSION_ID
@@ -845,7 +843,7 @@ Function sql_jobs {
      if ($DBVERSION -gt 102000)
      {
           $query_scheduler_jobs = @'
-          prompt <<<oracle_jobs:sep(124)>>>;
+          prompt <<<mssql_jobs:sep(124)>>>;
           SELECT upper(d.NAME)
                      ||'|'|| j.OWNER
                      ||'|'|| j.JOB_NAME
@@ -874,7 +872,7 @@ Function sql_jobs {
 ################################################################################
 Function sql_ts_quotas {
 $query_ts_quotas = @'
-prompt <<<oracle_ts_quotas:sep(124)>>>;
+prompt <<<mssql_ts_quotas:sep(124)>>>;
 select upper(d.NAME)
                  ||'|'|| Q.USERNAME
                  ||'|'|| Q.TABLESPACE_NAME
@@ -900,7 +898,7 @@ echo $query_ts_quotas
 ################################################################################
 Function sql_version {
 $query_version = @'
-prompt <<<oracle_version:sep(124)>>>;
+prompt <<<mssql_version:sep(124)>>>;
 select upper(i.INSTANCE_NAME)
 	  || '|' || banner
 	  from v$version, v$instance i
@@ -920,7 +918,7 @@ Function sql_instance {
      if ($ORACLE_IID.substring(0,1) -eq "+")
      {
           $query_instance = @'
-          prompt <<<oracle_instance:sep(124)>>>;
+          prompt <<<mssql_instance:sep(124)>>>;
           select upper(i.instance_name)
                      || '|' || i.VERSION
                      || '|' || i.STATUS
@@ -940,7 +938,7 @@ Function sql_instance {
      else
      {
           $query_instance = @'
-          prompt <<<oracle_instance:sep(124)>>>;
+          prompt <<<mssql_instance:sep(124)>>>;
           select upper(i.instance_name)
                      || '|' || i.VERSION
                      || '|' || i.STATUS
@@ -968,7 +966,7 @@ Function sql_instance {
 ################################################################################
 Function sql_sessions {
 $query_sessions = @'
-prompt <<<oracle_sessions:sep(124)>>>;
+prompt <<<mssql_sessions:sep(124)>>>;
 select upper(i.instance_name)
                   || '|' || CURRENT_UTILIZATION
            from v$resource_limit, v$instance i
@@ -986,7 +984,7 @@ echo $query_sessions
 ################################################################################
 Function sql_processes {
 $query_processes = @'
-prompt <<<oracle_processes:sep(124)>>>;
+prompt <<<mssql_processes:sep(124)>>>;
 select upper(i.instance_name)
                   || '|' || CURRENT_UTILIZATION
                   || '|' || ltrim(rtrim(LIMIT_VALUE))
@@ -1005,7 +1003,7 @@ echo $query_processes
 ################################################################################
 Function sql_logswitches {
 $query_logswitches = @'
-prompt <<<oracle_logswitches:sep(124)>>>;
+prompt <<<mssql_logswitches:sep(124)>>>;
 select upper(i.instance_name)
                   || '|' || logswitches
            from v$instance i ,
@@ -1066,7 +1064,7 @@ Function sql_locks_old {
      if ($DBVERSION -gt 101000)
      {
           $query_locks = @'
-          prompt <<<oracle_locks:sep(124)>>>;
+          prompt <<<mssql_locks:sep(124)>>>;
           SET SERVEROUTPUT ON feedback off
 DECLARE
     type x is table of varchar2(20000) index by pls_integer;
@@ -1126,7 +1124,7 @@ Function sql_longactivesessions {
      if ($DBVERSION -gt 101000)
      {
           $query_longactivesessions = @'
-          prompt <<<oracle_longactivesessions:sep(124)>>>;
+          prompt <<<mssql_longactivesessions:sep(124)>>>;
           select upper(i.instance_name)
                      || '|' || s.iid
                      || '|' || s.serial#
@@ -1164,7 +1162,7 @@ Function sql_asm_diskgroup {
      if ($DBVERSION -gt 112000)
      {
           $query_asm_diskgroup = @'
-          prompt <<<oracle_asm_diskgroup:sep(124)>>>;
+          prompt <<<mssql_asm_diskgroup:sep(124)>>>;
           select STATE
                      || '|' || TYPE
                      || '|' || 'N'
@@ -1184,7 +1182,7 @@ Function sql_asm_diskgroup {
 '@
      } elseif ($DBVERSION -gt 101000) {
           $query_asm_diskgroup = @'
-          prompt <<<oracle_asm_diskgroup:sep(124)>>>;
+          prompt <<<mssql_asm_diskgroup:sep(124)>>>;
           select STATE
                      || '|' || TYPE
                      || '|' || 'N'
@@ -1226,7 +1224,7 @@ Function sql_asm_diskgroup {
 [System.Reflection.Assembly]::LoadWithPartialName('Microsoft.SqlServer.SMO') | out-null
 $s = New-Object ('Microsoft.SqlServer.Management.Smo.Server') "LOCALHOST\SQL2000"
 $list_inst=($s.Databases | select Name)
-# tester
+# atn test
 
 
 # the following line ensures that the output of the files generated by calling
@@ -1342,7 +1340,7 @@ if ($the_count -gt 0) {
                                    # if used, then we at first presume that we do not want to skip this section
                                    $SKIP_SECTION=0
                                    # if this SECTION is in our ONLY_IIDS then it will be skipped
-                                   # "dynamic variables" are not supported in powershell. For example, $inst_name holds the value of the oracle_iid, let's say "ORCL"
+                                   # "dynamic variables" are not supported in powershell. For example, $inst_name holds the value of the mssql_iid, let's say "ORCL"
                                    # in powershell, I need to find the value of the variable EXCLUDE_ORCL, I cannot use "EXCLUDE_$inst_name" to reference that
                                    # and so I built the following workaround...
                                    if (((get-variable "EXCLUDE_$inst_name").value -contains "ALL") -or ((get-variable "EXCLUDE_$inst_name").value -contains $the_section)) {
@@ -1370,4 +1368,5 @@ if ($the_count -gt 0) {
 
 }
 debug_echo "got to the end"
+
 
